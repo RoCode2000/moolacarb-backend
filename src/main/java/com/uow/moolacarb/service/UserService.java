@@ -26,7 +26,7 @@ public class UserService {
         repo.update(u);
     }
 
-    public boolean findByEmailAndLoginType(String email, String loginType){
-        return repo.existsByEmailAndLoginType(email, loginType);
+    public User findByEmailAndLoginType(String email, String loginType){
+        return repo.findByEmailAndLoginType(email, loginType);
     }
 }

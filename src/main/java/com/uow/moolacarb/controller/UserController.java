@@ -43,10 +43,11 @@ public class UserController {
                 // user.setFirebaseId(request.getIdToken()); // this is too many characters apparently 
                 user.setCreatedDate(LocalDateTime.now());
                 user.setLoginMethod("G");
-            if( !service.findByEmailAndLoginType(request.getEmail(), "G")){
+            if( service.findByEmailAndLoginType(request.getEmail(), "G") == null){
                 service.create(user);
-            }
-            return ResponseEntity.ok(user);
+                return ResponseEntity.ok(user);
+            } else return ResponseEntity.ok(service.findByEmailAndLoginType(request.getEmail(), "G"));
+            
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -66,10 +67,11 @@ public class UserController {
                 // user.setFirebaseId(request.getIdToken()); // this is too many characters apparently 
                 user.setCreatedDate(LocalDateTime.now());
                 user.setLoginMethod("S");
-            if( !service.findByEmailAndLoginType(request.get("email"), "S")){
+            if(service.findByEmailAndLoginType(request.get("email"), "S") == null){
                 service.create(user);
-            }
-            return ResponseEntity.ok(user);
+                return ResponseEntity.ok(user);
+            } else 
+            return ResponseEntity.ok(service.findByEmailAndLoginType(request.get("email"), "S"));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

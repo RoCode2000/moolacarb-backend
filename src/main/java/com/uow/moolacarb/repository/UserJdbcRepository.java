@@ -2,6 +2,8 @@ package com.uow.moolacarb.repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -107,16 +109,24 @@ public class UserJdbcRepository {
         );
     }
 
-    public boolean existsByEmailAndLoginType(String email, String loginType) {
+    public User findByEmailAndLoginType(String email, String loginType) {
         try {
-            String sql = "SELECT COUNT(*) FROM `user` WHERE email = ? AND loginMethod = ?";
-            Integer count = jdbc.queryForObject(sql, Integer.class, email, loginType);
-            return count != null && count > 0;
+            String sql = "SELECT * FROM `user` WHERE email = ? AND loginMethod = ?";
+            return jdbc.queryForObject(
+                sql,
+                new BeanPropertyRowMapper<>(User.class),
+                email,
+                loginType
+            );
+        } catch (EmptyResultDataAccessException e) {
+            // No user found
+            return null;
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return null;
         }
     }
+
 
 
 }
