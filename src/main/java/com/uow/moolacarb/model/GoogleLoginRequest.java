@@ -8,6 +8,7 @@ public class GoogleLoginRequest {
         private String givenName;
         private String name;
         private String photoUrl;
+        private String firebaseId;
 
         // getters and setters
         public String getIdToken() { return idToken; }
@@ -24,4 +25,6 @@ public class GoogleLoginRequest {
         public void setName(String name) { this.name = name; }
         public String getPhotoUrl() { return photoUrl; }
         public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
+        public String getFirebaseId() { return firebaseId; }
+        public void setFirebaseId(String firebaseId) { this.firebaseId = firebaseId; }
 }

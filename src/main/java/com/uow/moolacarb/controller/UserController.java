@@ -34,16 +34,19 @@ public class UserController {
     @PostMapping("/google-login")
     public ResponseEntity<User> googleLogin(@RequestBody GoogleLoginRequest request) {
         try {
+            // System.out.println("Google login request: " + request);
                 User user = new User();
                 user.setUserId(UUID.randomUUID().toString());
                 user.setEmail(request.getEmail());
                 user.setFirstName(request.getGivenName());
                 user.setLastName(request.getFamilyName());
+                user.setFirebaseId(request.getFirebaseId());
                 // user.setUsername(request.getName());
                 // user.setFirebaseId(request.getIdToken()); // this is too many characters apparently 
                 user.setCreatedDate(LocalDateTime.now());
                 user.setLoginMethod("G");
             if( service.findByEmailAndLoginType(request.getEmail(), "G") == null){
+                // System.out.println("Google login request internal: " + user.getFirebaseId());
                 service.create(user);
                 return ResponseEntity.ok(user);
             } else return ResponseEntity.ok(service.findByEmailAndLoginType(request.getEmail(), "G"));
@@ -57,10 +60,12 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<User> login(@RequestBody Map<String, String> request) {
         try {
+                System.out.println("Login request: " + request);
                 User user = new User();
                 user.setUserId(UUID.randomUUID().toString());
                 user.setEmail(request.get("email"));
                 user.setFirstName(request.get("name"));
+                user.setFirebaseId(request.get("firebaseId"));
                 String hashedPassword = hashPassword(request.get("password"));
                 user.setPasswordHash(hashedPassword);
                 // user.setUsername(request.getName());
