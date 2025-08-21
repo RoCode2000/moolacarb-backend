@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -104,6 +105,19 @@ public class UserController {
             return hexString.toString();
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Error hashing password", e);
+        }
+    }
+
+    @GetMapping("/me/{firebaseId}")
+    public ResponseEntity<User> getUserByFirebaseId(@PathVariable String firebaseId) {
+        try {
+            User user = service.findByFirebaseId(firebaseId);
+            if (user == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 

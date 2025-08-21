@@ -29,4 +29,9 @@ public class UserService {
     public User findByEmailAndLoginType(String email, String loginType){
         return repo.findByEmailAndLoginType(email, loginType);
     }
+
+    public User findByFirebaseId(String firebaseId) {
+        return repo.findByFirebaseId(firebaseId);
+    }
+
 }

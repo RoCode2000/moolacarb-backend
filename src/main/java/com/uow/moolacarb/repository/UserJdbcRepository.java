@@ -127,6 +127,22 @@ public class UserJdbcRepository {
         }
     }
 
+    public User findByFirebaseId(String firebaseId) {
+        try {
+            String sql = "SELECT * FROM `user` WHERE firebaseId = ?";
+            return jdbc.queryForObject(
+                sql,
+                new UserRowMapper(), 
+                firebaseId
+            );
+        } catch (EmptyResultDataAccessException e) {
+            // No user found
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
 
 }
