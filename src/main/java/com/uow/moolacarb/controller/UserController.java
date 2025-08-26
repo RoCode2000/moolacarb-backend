@@ -5,6 +5,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.List;
 
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -23,6 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.uow.moolacarb.model.GoogleLoginRequest;
 import com.uow.moolacarb.model.User;
 import com.uow.moolacarb.service.UserService;
+import com.uow.moolacarb.DataTransferObject.UpdateStatusRequest;
+
+import jakarta.persistence.EntityNotFoundException;
+
+import com.mysql.cj.x.protobuf.MysqlxCrud.Update;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -125,11 +132,31 @@ public class UserController {
 
     @GetMapping("/userCount")
     public long getUserCount(@RequestParam(defaultValue = "all") String type) {
+        // TODO Error Handling
         return service.userCount(type);
     }
 
     @GetMapping("/getUsers")
     public List<User> getUsers(@RequestParam(required = false) Integer limit) {
+        // TODO Error Handling
         return service.getUsers(limit);
     }
+
+    @PatchMapping("/updateStatus/{userId}")
+    public ResponseEntity<?> updateStatus(@PathVariable String userId, @RequestBody UpdateStatusRequest req) {
+        try {
+            User updated = service.updateStatus(userId, req.getStatus());
+            return ResponseEntity.ok(updated);
+        }
+        catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(404).body("User not found");
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body("Status not available");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Internal error");
+        }
+    }
+    
 }

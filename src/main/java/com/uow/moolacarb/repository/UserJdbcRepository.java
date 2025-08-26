@@ -8,7 +8,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import com.uow.moolacarb.model.User; 
+import com.uow.moolacarb.model.User;
+
+import jakarta.persistence.EntityNotFoundException;
+
 import java.util.List;
 
 @Repository
@@ -175,6 +178,26 @@ public class UserJdbcRepository {
         else {
              return jdbc.query(sql, new UserRowMapper());
         }
-        
+    }
+
+    public int updateUserStatus(String userId, String newStatus) {
+        String sql = "UPDATE `user` SET userStatus = ? WHERE userId = ?";
+
+        String dbValue;
+        if ("Banned".equalsIgnoreCase(newStatus)) {
+            dbValue = "B";
+        }
+        else if ("Active".equalsIgnoreCase(newStatus)) {
+            dbValue = "A";
+        }
+        else {
+            throw new EntityNotFoundException("Status not available");
+        }
+        return jdbc.update(sql, dbValue, userId);
+    }
+
+    public User findById(String userId) {
+        String sql = "SELECT * FROM `user` WHERE userId = ?";
+        return jdbc.query(sql, new UserRowMapper(), userId).stream().findFirst().orElse(null);
     }
 }
