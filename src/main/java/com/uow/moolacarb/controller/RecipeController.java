@@ -23,4 +23,9 @@ public class RecipeController {
     public List<Recipe> getActiveList() {
         return this.service.findAllActive();
     }
+
+    @GetMapping("/countActive")
+    public Long countAllActive() {
+        return this.service.countAllActive();
+    }
 }

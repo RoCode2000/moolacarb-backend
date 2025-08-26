@@ -22,4 +22,8 @@ public class RecipeService {
     public Recipe searchById(String recipeId){
         return repo.findById(recipeId);
     }
+
+    public Long countAllActive(){
+        return repo.countAllActive();
+    }
 }

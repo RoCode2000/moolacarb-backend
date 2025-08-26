@@ -122,4 +122,9 @@ public class RecipeJdbcRepository {
             return null; 
         }
     }
+
+    public long countAllActive() {
+      String sql = "SELECT COUNT(*) FROM recipe where status='A'";
+      return jdbc.queryForObject(sql, Long.class);
+    }
 }
