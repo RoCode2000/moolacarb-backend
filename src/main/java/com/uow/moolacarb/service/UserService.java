@@ -48,6 +48,10 @@ public class UserService {
         return repo.getUsers(limit);
     }
 
+    public List<User> getPremiumUsers(Integer limit) {
+        return repo.getPremiumUsers(limit);
+    }
+
     public User updateStatus(String userId, String status){
         User existing = repo.findById(userId);
         if (existing == null) {

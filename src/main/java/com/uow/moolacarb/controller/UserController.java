@@ -142,6 +142,12 @@ public class UserController {
         return service.getUsers(limit);
     }
 
+    @GetMapping("/getPremiumUsers")
+    public List<User> getPremiumUsers(@RequestParam(required = false) Integer limit) {
+        // TODO Error Handling
+        return service.getPremiumUsers(limit);
+    }
+
     @PatchMapping("/updateStatus/{userId}")
     public ResponseEntity<?> updateStatus(@PathVariable String userId, @RequestBody UpdateStatusRequest req) {
         try {

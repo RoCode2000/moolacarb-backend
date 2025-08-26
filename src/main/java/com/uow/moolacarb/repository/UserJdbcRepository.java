@@ -180,6 +180,17 @@ public class UserJdbcRepository {
         }
     }
 
+    public List<User> getPremiumUsers(Integer limit){
+        String sql = "SELECT * FROM `user` WHERE premium = 'P' ORDER BY createdDate DESC";
+        if (limit != null && limit > 0) {
+            sql += " LIMIT ?";
+           return jdbc.query(sql, new UserRowMapper(), limit);
+        }
+        else {
+             return jdbc.query(sql, new UserRowMapper());
+        }
+    }
+
     public int updateUserStatus(String userId, String newStatus) {
         String sql = "UPDATE `user` SET userStatus = ? WHERE userId = ?";
 
