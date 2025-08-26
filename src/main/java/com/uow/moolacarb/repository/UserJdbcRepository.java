@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import com.uow.moolacarb.model.User; 
+import java.util.List;
 
 @Repository
 public class UserJdbcRepository {
@@ -144,5 +145,36 @@ public class UserJdbcRepository {
         }
     }
 
+    public long userCount(String type) {
+        String sql;
 
+        switch (type.toLowerCase()) {
+            case "paid":
+                sql = "SELECT COUNT(*) FROM `user` WHERE premium = 'P'";
+                break;
+            case "free":
+                sql = "SELECT COUNT(*) FROM `user` WHERE premium = 'F'";
+                break;
+            case "banned":
+                sql = "SELECT COUNT(*) FROM `user` WHERE userStatus = 'B'";
+                break;
+            default: // "all"
+                sql = "SELECT COUNT(*) FROM `user`";
+                break;
+        }
+
+        return jdbc.queryForObject(sql, Long.class);
+    }
+
+    public List<User> getUsers(Integer limit){
+        String sql = "SELECT * FROM `user` ORDER BY createdDate DESC";
+        if (limit != null && limit > 0) {
+            sql += " LIMIT ?";
+           return jdbc.query(sql, new UserRowMapper(), limit);
+        }
+        else {
+             return jdbc.query(sql, new UserRowMapper());
+        }
+        
+    }
 }

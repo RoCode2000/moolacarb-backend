@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.uow.moolacarb.model.User;
 import com.uow.moolacarb.repository.UserJdbcRepository;
+import java.util.List;
 
 @Service
 public class UserService {
@@ -32,6 +33,14 @@ public class UserService {
 
     public User findByFirebaseId(String firebaseId) {
         return repo.findByFirebaseId(firebaseId);
+    }
+
+    public long userCount(String type) {
+        return repo.userCount(type);
+    }
+
+    public List<User> getUsers(Integer limit) {
+        return repo.getUsers(limit);
     }
 
 }

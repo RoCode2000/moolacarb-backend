@@ -6,6 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.uow.moolacarb.model.GoogleLoginRequest;
@@ -121,4 +123,13 @@ public class UserController {
         }
     }
 
+    @GetMapping("/userCount")
+    public long getUserCount(@RequestParam(defaultValue = "all") String type) {
+        return service.userCount(type);
+    }
+
+    @GetMapping("/getUsers")
+    public List<User> getUsers(@RequestParam(required = false) Integer limit) {
+        return service.getUsers(limit);
+    }
 }
