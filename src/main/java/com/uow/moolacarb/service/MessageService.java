@@ -23,10 +23,10 @@ public class MessageService {
 
     public void create(Message m){
         // Basic validation (optional, or use @Valid with Bean Validation)
-        // if (m.getEmail() == null || m.getEmail().isBlank())
-        //     throw new IllegalArgumentException("Email is required");
-        // if (m.getMessage() == null || m.getMessage().isBlank())
-        //     throw new IllegalArgumentException("Message is required");
+        if (m.getEmail() == null || m.getEmail().isBlank())
+            throw new IllegalArgumentException("Email is required");
+        if (m.getMessage() == null || m.getMessage().isBlank())
+            throw new IllegalArgumentException("Message is required");
         if (m.getCreatedAt() == null) m.setCreatedAt(LocalDateTime.now());
         repo.insert(m);
     }
@@ -34,4 +34,20 @@ public class MessageService {
     public void update(Message m) {
         repo.update(m);
     }
+
+    public List<Message> getMessages(Integer limit) {
+        return repo.getMessages(limit);
+    }
+
+    public void delete(Integer id) {
+        if (repo.getMessageById(id) == null) {
+        throw new NoSuchElementException("Message not found");
+    }
+        repo.delete(id);
+    }
+
+    public void updateReply(String id, String reply) {
+    int rows = repo.updateReply(id, reply, "R");
+    if (rows == 0) throw new NoSuchElementException("Message not found");
+}
 }
