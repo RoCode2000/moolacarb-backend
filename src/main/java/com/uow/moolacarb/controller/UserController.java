@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.uow.moolacarb.model.GoogleLoginRequest;
 import com.uow.moolacarb.model.User;
 import com.uow.moolacarb.service.UserService;
-import com.uow.moolacarb.DataTransferObject.UpdateStatusRequest;
+import com.uow.moolacarb.DataTransferObject.UserUpdateRequest;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -148,10 +148,10 @@ public class UserController {
         return service.getPremiumUsers(limit);
     }
 
-    @PatchMapping("/updateStatus/{userId}")
-    public ResponseEntity<?> updateStatus(@PathVariable String userId, @RequestBody UpdateStatusRequest req) {
+    @PatchMapping("/update/{userId}")
+    public ResponseEntity<?> updateUser(@PathVariable String userId, @RequestBody UserUpdateRequest req) {
         try {
-            User updated = service.updateStatus(userId, req.getStatus());
+            User updated = service.updateUser(userId, req);
             return ResponseEntity.ok(updated);
         }
         catch (IllegalArgumentException e) {

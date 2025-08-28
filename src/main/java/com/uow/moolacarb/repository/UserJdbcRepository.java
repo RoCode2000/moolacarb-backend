@@ -1,4 +1,5 @@
 package com.uow.moolacarb.repository;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -16,7 +17,7 @@ import java.util.List;
 
 @Repository
 public class UserJdbcRepository {
-    
+
     private final JdbcTemplate jdbc;
 
     public UserJdbcRepository(JdbcTemplate jdbc) {
@@ -36,14 +37,13 @@ public class UserJdbcRepository {
             u.setEmail(rs.getString("email"));
             u.setGender(rs.getString("gender"));
 
-            
             if (rs.getTimestamp("DOB") != null) {
                 u.setDob(rs.getTimestamp("DOB").toLocalDateTime());
             }
 
             u.setGoals(rs.getString("goals"));
             u.setTimeframe(rs.getInt("timeframe"));
-            if (rs.wasNull()) { 
+            if (rs.wasNull()) {
                 u.setTimeframe(null);
             }
 
@@ -63,65 +63,64 @@ public class UserJdbcRepository {
     public int insert(User u) {
         try {
             return jdbc.update(
-            "INSERT INTO `user` " +
-            "(userId, firstName, lastName, username, passwordHash, email, gender, DOB, goals, timeframe, exercise, premium, userStatus, firebaseId, createdDate, loginMethod) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            u.getUserId(),
-            u.getFirstName(),
-            u.getLastName(),
-            u.getUsername(),
-            u.getPasswordHash(),
-            u.getEmail(),
-            u.getGender(),
-            u.getDob(),         
-            u.getGoals(),
-            u.getTimeframe(),
-            u.getExercise(),
-            u.getPremium(),
-            u.getUserStatus(),
-            u.getFirebaseId(),
-            u.getCreatedDate(),
-            u.getLoginMethod()  
-            );
+                    "INSERT INTO `user` " +
+                            "(userId, firstName, lastName, username, passwordHash, email, gender, DOB, goals, timeframe, exercise, premium, userStatus, firebaseId, createdDate, loginMethod) "
+                            +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    u.getUserId(),
+                    u.getFirstName(),
+                    u.getLastName(),
+                    u.getUsername(),
+                    u.getPasswordHash(),
+                    u.getEmail(),
+                    u.getGender(),
+                    u.getDob(),
+                    u.getGoals(),
+                    u.getTimeframe(),
+                    u.getExercise(),
+                    u.getPremium(),
+                    u.getUserStatus(),
+                    u.getFirebaseId(),
+                    u.getCreatedDate(),
+                    u.getLoginMethod());
         } catch (Exception e) {
             e.printStackTrace(); // <-- This will print the real SQL error
             return 0;
         }
-        
+
     }
 
     public int update(User u) {
         return jdbc.update(
-            "UPDATE user SET firstName=?, lastName=?, username=?, passwordHash=?, email=?, gender=?, DOB=?, goals=?, timeframe=?, exercise=?, premium=?, userStatus=?, firebaseId=?, createdDate=?, loginMethod=? " +
-            "WHERE userId=?",
-            u.getFirstName(),
-            u.getLastName(),
-            u.getUsername(),
-            u.getPasswordHash(),
-            u.getEmail(),
-            u.getGender(),
-            u.getDob(), 
-            u.getGoals(),
-            u.getTimeframe(),
-            u.getExercise(),
-            u.getPremium(),
-            u.getUserStatus(),
-            u.getFirebaseId(),
-            u.getCreatedDate(),
-            u.getLoginMethod(), 
-            u.getUserId()
-        );
+                "UPDATE user SET firstName=?, lastName=?, username=?, passwordHash=?, email=?, gender=?, DOB=?, goals=?, timeframe=?, exercise=?, premium=?, userStatus=?, firebaseId=?, createdDate=?, loginMethod=? "
+                        +
+                        "WHERE userId=?",
+                u.getFirstName(),
+                u.getLastName(),
+                u.getUsername(),
+                u.getPasswordHash(),
+                u.getEmail(),
+                u.getGender(),
+                u.getDob(),
+                u.getGoals(),
+                u.getTimeframe(),
+                u.getExercise(),
+                u.getPremium(),
+                u.getUserStatus(),
+                u.getFirebaseId(),
+                u.getCreatedDate(),
+                u.getLoginMethod(),
+                u.getUserId());
     }
 
     public User findByEmailAndLoginType(String email, String loginType) {
         try {
             String sql = "SELECT * FROM `user` WHERE email = ? AND loginMethod = ?";
             return jdbc.queryForObject(
-                sql,
-                new BeanPropertyRowMapper<>(User.class),
-                email,
-                loginType
-            );
+                    sql,
+                    new BeanPropertyRowMapper<>(User.class),
+                    email,
+                    loginType);
         } catch (EmptyResultDataAccessException e) {
             // No user found
             return null;
@@ -135,10 +134,9 @@ public class UserJdbcRepository {
         try {
             String sql = "SELECT * FROM `user` WHERE firebaseId = ?";
             return jdbc.queryForObject(
-                sql,
-                new UserRowMapper(), 
-                firebaseId
-            );
+                    sql,
+                    new UserRowMapper(),
+                    firebaseId);
         } catch (EmptyResultDataAccessException e) {
             // No user found
             return null;
@@ -148,11 +146,12 @@ public class UserJdbcRepository {
         }
     }
 
+    // SQL INJECTION POTENTIAL, DEFAULT SHOULD RETURN EXCEPTION
     public long userCount(String type) {
         String sql;
 
         switch (type.toLowerCase()) {
-            case "paid":
+            case "premium":
                 sql = "SELECT COUNT(*) FROM `user` WHERE premium = 'P'";
                 break;
             case "free":
@@ -169,42 +168,34 @@ public class UserJdbcRepository {
         return jdbc.queryForObject(sql, Long.class);
     }
 
-    public List<User> getUsers(Integer limit){
+    public List<User> getUsers(Integer limit) {
         String sql = "SELECT * FROM `user` ORDER BY createdDate DESC";
         if (limit != null && limit > 0) {
             sql += " LIMIT ?";
-           return jdbc.query(sql, new UserRowMapper(), limit);
-        }
-        else {
-             return jdbc.query(sql, new UserRowMapper());
+            return jdbc.query(sql, new UserRowMapper(), limit);
+        } else {
+            return jdbc.query(sql, new UserRowMapper());
         }
     }
 
-    public List<User> getPremiumUsers(Integer limit){
+    public List<User> getPremiumUsers(Integer limit) {
         String sql = "SELECT * FROM `user` WHERE premium = 'P' ORDER BY createdDate DESC";
         if (limit != null && limit > 0) {
             sql += " LIMIT ?";
-           return jdbc.query(sql, new UserRowMapper(), limit);
-        }
-        else {
-             return jdbc.query(sql, new UserRowMapper());
+            return jdbc.query(sql, new UserRowMapper(), limit);
+        } else {
+            return jdbc.query(sql, new UserRowMapper());
         }
     }
 
-    public int updateUserStatus(String userId, String newStatus) {
+    public int updateStatus(String userId, String status) {
         String sql = "UPDATE `user` SET userStatus = ? WHERE userId = ?";
+        return jdbc.update(sql, status, userId);
+    }
 
-        String dbValue;
-        if ("Banned".equalsIgnoreCase(newStatus)) {
-            dbValue = "B";
-        }
-        else if ("Active".equalsIgnoreCase(newStatus)) {
-            dbValue = "A";
-        }
-        else {
-            throw new EntityNotFoundException("Status not available");
-        }
-        return jdbc.update(sql, dbValue, userId);
+    public int updatePremium(String userId, String premium) {
+        String sql = "UPDATE `user` SET premium = ? WHERE userId = ?";
+        return jdbc.update(sql, premium, userId);
     }
 
     public User findById(String userId) {
