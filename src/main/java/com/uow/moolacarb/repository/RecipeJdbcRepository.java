@@ -16,7 +16,7 @@ public class RecipeJdbcRepository {
   private final JdbcTemplate jdbc;
   public RecipeJdbcRepository(JdbcTemplate jdbc) { this.jdbc = jdbc; }
 
-  private static class Map implements RowMapper<Recipe> {
+  private static class RecipeRowMapper implements RowMapper<Recipe> {
     @Override
     public Recipe mapRow(ResultSet rs, int rowNum) throws SQLException {
       Recipe r = new Recipe();
@@ -58,7 +58,7 @@ public class RecipeJdbcRepository {
       WHERE status = 'A'
       ORDER BY recipeId ASC
     """;
-    return jdbc.query(sql, new Map());
+    return jdbc.query(sql, new RecipeRowMapper());
   }
 
   /** Create a new recipe */
@@ -117,7 +117,7 @@ public class RecipeJdbcRepository {
             WHERE recipeId = ?
         """;
         try {
-            return jdbc.queryForObject(sql, new Map(), recipeId);
+            return jdbc.queryForObject(sql, new RecipeRowMapper(), recipeId);
         } catch (EmptyResultDataAccessException e) {
             return null; 
         }
@@ -126,5 +126,15 @@ public class RecipeJdbcRepository {
     public long countAllActive() {
       String sql = "SELECT COUNT(*) FROM recipe where status='A'";
       return jdbc.queryForObject(sql, Long.class);
+    }
+
+    public List<Recipe> getActiveRecipes(Integer limit) {
+        String sql = "SELECT * FROM `recipe` WHERE status = 'A'";
+        if (limit != null && limit > 0) {
+            sql += " LIMIT ?";
+            return jdbc.query(sql, new RecipeRowMapper(), limit);
+        } else {
+            return jdbc.query(sql, new RecipeRowMapper());
+        }
     }
 }

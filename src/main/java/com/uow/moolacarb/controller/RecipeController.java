@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import com.uow.moolacarb.model.Recipe;
 import com.uow.moolacarb.service.RecipeService;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -27,5 +29,13 @@ public class RecipeController {
     @GetMapping("/countActive")
     public Long countAllActive() {
         return this.service.countAllActive();
+    }
+
+    // TODO Get recipe by ID for display of recipe details
+
+    @GetMapping("/getActiveRecipes")
+    public List<Recipe> getActiveRecipes(@RequestParam(required = false) Integer limit) {
+        // TODO Error Handling
+        return service.getActiveRecipes(limit);
     }
 }

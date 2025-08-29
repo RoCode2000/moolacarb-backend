@@ -26,4 +26,8 @@ public class RecipeService {
     public Long countAllActive(){
         return repo.countAllActive();
     }
+
+    public List<Recipe> getActiveRecipes(Integer limit) {
+        return repo.getActiveRecipes(limit);
+    }
 }
