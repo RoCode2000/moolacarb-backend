@@ -22,4 +22,12 @@ public class RecipeService {
     public Recipe searchById(String recipeId){
         return repo.findById(recipeId);
     }
+
+    public void create(Recipe recipe){
+        repo.create(recipe);
+    }
+
+    public List<Recipe> getRecipesByUser(String userId){
+        return repo.listAllRecipesByUser(userId);
+    }
 }

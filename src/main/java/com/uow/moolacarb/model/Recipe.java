@@ -1,5 +1,8 @@
 package com.uow.moolacarb.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Lob;
+
 public class Recipe {
 
     private String recipeId;
@@ -25,6 +28,10 @@ public class Recipe {
     private String mealType;
     private float overallRating;
     private String imageLink;
+
+    @Lob
+    @Column(columnDefinition = "MEDIUMBLOB")
+    private byte[] imageBinary;
 
     public String getRecipeId() {
         return recipeId;
@@ -208,5 +215,13 @@ public class Recipe {
 
     public void setImageLink(String imageLink) {
         this.imageLink = imageLink;
+    }
+
+    public byte[] getImageBinary() {
+        return imageBinary;
+    }
+
+    public void setImageBinary(byte[] imageBinary) {
+        this.imageBinary = imageBinary;
     }
 }
