@@ -30,4 +30,12 @@ public class RecipeService {
     public List<Recipe> getActiveRecipes(Integer limit) {
         return repo.getActiveRecipes(limit);
     }
+
+    public void create(Recipe recipe){
+        repo.create(recipe);
+    }
+
+    public List<Recipe> getRecipesByUser(String userId){
+        return repo.listAllRecipesByUser(userId);
+    }
 }

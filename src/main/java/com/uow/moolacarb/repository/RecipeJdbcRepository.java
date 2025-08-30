@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -43,6 +44,7 @@ public class RecipeJdbcRepository {
       r.setMealType(rs.getString("mealType"));
       r.setOverallRating(rs.getFloat("overallRating"));
       r.setImageLink(rs.getString("imageLink"));
+      r.setImageBinary(rs.getBytes("imageBinary"));
       return r;
     }
   }
@@ -53,7 +55,7 @@ public class RecipeJdbcRepository {
       SELECT recipeId, title, serving, ingredients, instructions,
              calories, carbohydrates, protein, fat, saturatedFat, sodium,
              cholesterol, potassium, status, author, prepTime, cookTime,
-             restingTime, cuisine, description, mealType, overallRating, imageLink
+             restingTime, cuisine, description, mealType, overallRating, imageLink, imageBinary
       FROM recipe
       WHERE status = 'A'
       ORDER BY recipeId ASC
@@ -68,8 +70,8 @@ public class RecipeJdbcRepository {
                           carbohydrates, protein, fat, saturatedFat, sodium,
                           cholesterol, potassium, status, author, prepTime,
                           cookTime, restingTime, cuisine, description, mealType,
-                          overallRating, imageLink)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'A', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                          overallRating, imageLink, imageBinary)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """;
     return jdbc.update(sql,
       r.getTitle(),
@@ -93,7 +95,8 @@ public class RecipeJdbcRepository {
       r.getDescription(),
       r.getMealType(),
       r.getOverallRating(),
-      r.getImageLink()
+      r.getImageLink(),
+      r.getImageBinary()
     );
   }
 
@@ -102,7 +105,7 @@ public class RecipeJdbcRepository {
     String sql = """
       UPDATE recipe
       SET status = 'I', updatedAt = CURRENT_TIMESTAMP
-      WHERE recipeId = ? AND status = 'A'
+      WHERE recipeId = ? AND status <> 'I' 
     """;
     return jdbc.update(sql, recipeId);
   }
@@ -112,7 +115,7 @@ public class RecipeJdbcRepository {
             SELECT recipeId, title, serving, ingredients, instructions, calories,
                 carbohydrates, protein, fat, saturatedFat, sodium, cholesterol,
                 potassium, status, author, prepTime, cookTime, restingTime,
-                cuisine, description, mealType, overallRating, imageLink
+                cuisine, description, mealType, overallRating, imageLink, imageBinary
             FROM recipe
             WHERE recipeId = ?
         """;
@@ -122,6 +125,18 @@ public class RecipeJdbcRepository {
             return null; 
         }
     }
+
+  public List<Recipe> listAllRecipesByUser(String userId) {
+    String sql = """
+      SELECT recipeId, title, serving, ingredients, instructions,
+             calories, carbohydrates, protein, fat, saturatedFat, sodium,
+             cholesterol, potassium, status, author, prepTime, cookTime,
+             restingTime, cuisine, description, mealType, overallRating, imageLink, imageBinary
+      FROM recipe
+      WHERE author = ?
+    """;
+    return jdbc.query(sql, new BeanPropertyRowMapper<>(Recipe.class), userId);
+  }
 
     public long countAllActive() {
       String sql = "SELECT COUNT(*) FROM recipe where status='A'";
