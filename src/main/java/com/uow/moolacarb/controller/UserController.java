@@ -3,6 +3,7 @@ package com.uow.moolacarb.controller;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -165,4 +166,39 @@ public class UserController {
         }
     }
     
+@PostMapping("/onboarding")
+public ResponseEntity<?> onboarding(@RequestBody Map<String, Object> req) {
+    try {
+        String firebaseId = (String) req.get("firebaseId");
+        String gender = (String) req.get("gender");
+        String exercise = (String) req.get("exercise");
+        String dobStr = (String) req.get("dob");
+        String goal = (String) req.get("goal");
+        Integer timeframe = req.get("timeframe") != null ? ((Number) req.get("timeframe")).intValue() : null;
+
+        User u = new User();
+        u.setFirebaseId(firebaseId);
+        u.setGender(gender);
+        u.setExercise(exercise);
+        u.setGoals(goal);
+        u.setTimeframe(timeframe);
+
+        if (dobStr != null) {
+            LocalDate dob = LocalDate.parse(dobStr.substring(0, 10));
+            u.setDob(dob.atStartOfDay());
+        }
+
+        Float weight = req.get("weight") != null ? ((Number) req.get("weight")).floatValue() : null;
+        Float height = req.get("height") != null ? ((Number) req.get("height")).floatValue() : null;
+
+        service.updateOnboarding(u, weight, height);
+
+        return ResponseEntity.ok("Onboarding updated");
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(500).body("Error updating onboarding");
+    }
+}
+
+
 }
