@@ -2,6 +2,7 @@ package com.uow.moolacarb.repository;
 
 import java.util.List;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -32,7 +33,11 @@ public class WeightHistoryRepository {
     // Get the latest weight
     public WeightHistory getCurrent(String firebaseId) {
         String sql = "SELECT * FROM weightHistory WHERE firebaseId=? AND isCurrent='Y'";
-        return jdbc.queryForObject(sql, new BeanPropertyRowMapper<>(WeightHistory.class), firebaseId);
+        try {
+            return jdbc.queryForObject(sql, new BeanPropertyRowMapper<>(WeightHistory.class), firebaseId);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
     // Get the full history

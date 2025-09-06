@@ -1,7 +1,9 @@
+// src/main/java/com/uow/moolacarb/repository/HeightHistoryRepository.java
 package com.uow.moolacarb.repository;
 
 import java.util.List;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -19,25 +21,26 @@ public class HeightHistoryRepository {
 
     // Insert new height record, mark old ones as not current
     public int insert(String firebaseId, float height) {
-        // Set old records to not current
         jdbc.update("UPDATE heightHistory SET isCurrent='N' WHERE firebaseId=? AND isCurrent='Y'", firebaseId);
-
-        // Insert new record
         return jdbc.update(
             "INSERT INTO heightHistory (firebaseId, height, lastUpdated, isCurrent) VALUES (?, ?, NOW(), 'Y')",
             firebaseId, height
         );
     }
 
-    // Get the latest height
+    // Get the latest (current) height; return null if not found
     public HeightHistory getCurrent(String firebaseId) {
-        String sql = "SELECT * FROM heightHistory WHERE firebaseId=? AND isCurrent='Y'";
-        return jdbc.queryForObject(sql, new BeanPropertyRowMapper<>(HeightHistory.class), firebaseId);
+        final String sql = "SELECT * FROM heightHistory WHERE firebaseId=? AND isCurrent='Y'";
+        try {
+            return jdbc.queryForObject(sql, new BeanPropertyRowMapper<>(HeightHistory.class), firebaseId);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
-    // Get full history
+    // Get full history (newest first)
     public List<HeightHistory> getHistory(String firebaseId) {
-        String sql = "SELECT * FROM heightHistory WHERE firebaseId=? ORDER BY lastUpdated DESC";
+        final String sql = "SELECT * FROM heightHistory WHERE firebaseId=? ORDER BY lastUpdated DESC";
         return jdbc.query(sql, new BeanPropertyRowMapper<>(HeightHistory.class), firebaseId);
     }
 }
