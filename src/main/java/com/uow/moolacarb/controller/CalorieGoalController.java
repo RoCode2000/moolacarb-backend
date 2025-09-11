@@ -15,21 +15,22 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
  * Calorie goal + lightweight recipe recommendations.
- * - Keeps your teammate's code intact elsewhere (repos/controllers/services).
- * - Uses Mifflin–St Jeor + PAL.
- * - Recommendations: picks 3 random meal-like recipes whose kcal sum ~ daily target.
+ * - Keeps teammate code intact elsewhere.
+ * - Uses Mifflin–St Jeor + PAL for daily target.
+ * - Recommendations: returns 3 random recipes, optionally bounded by kcal band and profile allow-lists.
  */
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/calorie-goal")
 public class CalorieGoalController {
 
-  // ---- PAL factors (FAO/WHO/UNU-like commonly used set) ----
+  // ---- PAL factors ----
   private static final double PAL_SEDENTARY = 1.20;
   private static final double PAL_LIGHT     = 1.375;
   private static final double PAL_MODERATE  = 1.55;
@@ -68,8 +69,10 @@ public class CalorieGoalController {
 
   /**
    * GET /api/calorie-goal/recommendations?firebaseId=...&count=3
-   * Returns 3 recipe cards whose combined kcal is near the user's daily target.
-   * Does NOT subtract consumed; just aims for ~daily target total as requested.
+   * Returns random recipe cards loosely matched to the profile.
+   * - Keeps it visually to 3 items.
+   * - Uses a simple per-meal kcal band; pass nulls to go fully random.
+   * - If you have profile prefs (cuisine/mealType), wire them into the allow-lists below.
    */
   @GetMapping("/recommendations")
   public List<RecipeCard> recommend(
@@ -77,31 +80,27 @@ public class CalorieGoalController {
       @RequestParam(required = false, defaultValue = "3") int count
   ) {
     if (count <= 0) return List.of();
-    if (count != 3) count = 3; // tuned for 3 cards visually
+    if (count != 3) count = 3;
 
+    // Rough per-meal band based on daily target. If you want PURE random, set both to null.
     int target = computeDailyTarget(firebaseId);
+    int perMeal = Math.max(250, target / 3);
+    Integer kcalMin = Math.max(0, perMeal - 150);
+    Integer kcalMax = perMeal + 150;
 
-    // 1) Pull a random candidate pool (exclude drinks/desserts)
-    //    kcal band to represent "meal-like" items; adjust freely
-    int kcalMin = 350, kcalMax = 900;
-    int poolSize = 100;
-    List<String> excludedTypes = List.of("drink", "beverage", "dessert");
+    // Optional: pull profile prefs here (replace with your own sources/fields).
+    List<String> allowedCuisines = getPreferredCuisines(firebaseId);   // e.g., ["asian","thai"]
+    List<String> allowedMealTypes = getPreferredMealTypes(firebaseId); // e.g., ["breakfast","lunch","dinner"]
 
-    List<RecipeCard> pool = recipeRepo.findRandomCardsByKcalRangeExcludingTypes(
-        kcalMin, kcalMax, poolSize, excludedTypes
+    // If you want it fully random irrespective of calories, flip these to null:
+    // kcalMin = null; kcalMax = null;
+
+    return recipeRepo.findRandomCardsByProfile(
+        kcalMin, kcalMax,
+        emptyToNull(allowedCuisines),
+        emptyToNull(allowedMealTypes),
+        count
     );
-
-    // 2) Try to find 3 that sum close to target; widen window progressively
-    Collections.shuffle(pool, seededRandomFor(firebaseId)); // different users/days see different combos
-    int[] windows = new int[]{50, 100, 150, 200, 300};
-
-    for (int win : windows) {
-      List<RecipeCard> triple = findTripleCloseToTarget(pool, target, win);
-      if (triple != null) return triple;
-    }
-
-    // 3) Fallback: just return any 3 random from pool
-    return pool.size() >= 3 ? pool.subList(0, 3) : List.of();
   }
 
   // --------- Internal helpers ---------
@@ -143,13 +142,8 @@ public class CalorieGoalController {
     if (goal == null) return "MAINTAIN";
     String g = goal.trim().toUpperCase(Locale.ROOT);
 
-    // Canonical
     if (g.equals("LOSE") || g.equals("MAINTAIN") || g.equals("BUILD_MUSCLE") || g.equals("GAIN")) return g;
-    // Your FE also uses MUSCLE / IMPROVE; map them:
-    if (g.equals("MUSCLE"))  return "BUILD_MUSCLE";
-    if (g.equals("IMPROVE")) return "MAINTAIN";
 
-    // Legacy phrases
     String gl = goal.toLowerCase(Locale.ROOT);
     if (gl.contains("lose")) return "LOSE";
     if (gl.contains("muscle") || gl.contains("gain")) return "BUILD_MUSCLE";
@@ -163,16 +157,14 @@ public class CalorieGoalController {
     if (exercise == null || exercise.isBlank()) return PAL_MODERATE;
     String e = exercise.trim().toLowerCase(Locale.ROOT);
 
-    // Canonical keys from your FE: sedentary|light|moderate|very|extra
     switch (e) {
       case "sedentary": return PAL_SEDENTARY;
       case "light":     return PAL_LIGHT;
       case "moderate":  return PAL_MODERATE;
       case "very":      return PAL_VERY;
       case "extra":     return PAL_EXTRA;
+      default: break;
     }
-
-    // Legacy/phrase fallback
     if (e.contains("never") || e.contains("none") || e.contains("sedentary")) return PAL_SEDENTARY;
     if (e.contains("1–2") || e.contains("1-2") || e.contains("light"))        return PAL_LIGHT;
     if (e.contains("3–5") || e.contains("3-5") || e.contains("moderate"))     return PAL_MODERATE;
@@ -182,49 +174,19 @@ public class CalorieGoalController {
     return PAL_MODERATE;
   }
 
-  /**
-   * Find 3 items whose kcal sum lies within [target - window, target + window].
-   * If none found, return the closest triple.
-   */
-  private List<RecipeCard> findTripleCloseToTarget(List<RecipeCard> pool, int target, int window) {
-    if (pool == null || pool.size() < 3) return null;
+  // ---- Profile hooks (replace with real implementations if you have them) ----
 
-    // Sort a copy by kcal for 2-pointer approach
-    List<RecipeCard> arr = new ArrayList<>(pool);
-    arr.sort(Comparator.comparingInt(RecipeCard::kcal));
-
-    int n = arr.size();
-    int bestDiff = Integer.MAX_VALUE;
-    int[] bestIdx = null;
-
-    for (int i = 0; i < n - 2; i++) {
-      int left = i + 1, right = n - 1;
-      while (left < right) {
-        int sum = arr.get(i).kcal() + arr.get(left).kcal() + arr.get(right).kcal();
-        int diff = Math.abs(sum - target);
-
-        if (diff <= window) {
-          return List.of(arr.get(i), arr.get(left), arr.get(right));
-        }
-        if (diff < bestDiff) {
-          bestDiff = diff;
-          bestIdx = new int[]{i, left, right};
-        }
-        if (sum < target) left++; else right--;
-      }
-    }
-
-    if (bestIdx != null) {
-      return List.of(arr.get(bestIdx[0]), arr.get(bestIdx[1]), arr.get(bestIdx[2]));
-    }
+  private List<String> getPreferredCuisines(String firebaseId) {
+    // TODO: wire to your user profile prefs. Return null/empty to ignore.
     return null;
   }
 
-  /** Seeded random so each user gets a stable daily shuffle; different users differ. */
-  private Random seededRandomFor(String firebaseId) {
-    long day = java.time.LocalDate.now(java.time.ZoneOffset.UTC).toEpochDay();
-    long timestamp = System.nanoTime();  // Adds more randomness
-    return new Random(Objects.hash(firebaseId, day, timestamp));
+  private List<String> getPreferredMealTypes(String firebaseId) {
+    // TODO: wire to your user profile prefs. Return null/empty to ignore.
+    return null;
   }
 
+  private static <T> List<T> emptyToNull(List<T> list) {
+    return (list == null || list.isEmpty()) ? null : list;
+  }
 }

@@ -164,15 +164,13 @@ public class RecipeJdbcRepository {
     }
   }
 
-  // ---------- NEW additive API used by CalorieGoalController ----------
+  // ---------- Existing additive utility (kept) ----------
   /**
-   * Returns random recipe “cards” filtered by kcal range and excluding selected meal types.
-   * Assumes `calories` is **per serving** (you confirmed).
+   * Returns random recipe cards filtered by kcal range and excluding selected meal types.
    */
   public List<RecipeCard> findRandomCardsByKcalRangeExcludingTypes(
       int kcalMin, int kcalMax, int limit, List<String> excludedMealTypes
   ) {
-    // Build optional NOT IN (...) for mealType, carefully preserving spaces
     String excludeTypesSql = (excludedMealTypes == null || excludedMealTypes.isEmpty())
         ? ""
         : " AND (mealType IS NULL OR LOWER(mealType) NOT IN (" +
@@ -197,10 +195,71 @@ public class RecipeJdbcRepository {
     args.add(kcalMin);
     args.add(kcalMax);
     if (excludedMealTypes != null && !excludedMealTypes.isEmpty()) {
-      for (String t : excludedMealTypes) args.add(t.toLowerCase());
+      for (String t : excludedMealTypes) args.add(t.toLowerCase(Locale.ROOT));
     }
     args.add(limit);
 
     return jdbc.query(sql, args.toArray(), new RecipeCardRowMapper());
+  }
+
+  // ---------- NEW: profile-matched random picker ----------
+  /**
+   * Random recipe cards matched to profile-like filters:
+   * - Optional kcalMin/kcalMax (null = ignore)
+   * - Optional allowed cuisines (case-insensitive)
+   * - Optional allowed meal types (case-insensitive)
+   * Returns up to `limit` in random order.
+   */
+  public List<RecipeCard> findRandomCardsByProfile(
+      Integer kcalMin,
+      Integer kcalMax,
+      List<String> allowedCuisines,
+      List<String> allowedMealTypes,
+      int limit
+  ) {
+    StringBuilder sql = new StringBuilder("""
+      SELECT
+        recipeId,
+        title,
+        imageLink,
+        calories AS kcal_per_serving
+      FROM recipe
+      WHERE status = 'A'
+        AND calories IS NOT NULL
+    """);
+
+    List<Object> args = new ArrayList<>();
+
+    // kcal band (optional)
+    if (kcalMin != null && kcalMax != null) {
+      sql.append(" AND calories BETWEEN ? AND ? ");
+      args.add(kcalMin);
+      args.add(kcalMax);
+    } else if (kcalMin != null) {
+      sql.append(" AND calories >= ? ");
+      args.add(kcalMin);
+    } else if (kcalMax != null) {
+      sql.append(" AND calories <= ? ");
+      args.add(kcalMax);
+    }
+
+    // cuisines (optional allow-list)
+    if (allowedCuisines != null && !allowedCuisines.isEmpty()) {
+      String marks = String.join(",", Collections.nCopies(allowedCuisines.size(), "?"));
+      sql.append(" AND (cuisine IS NOT NULL AND LOWER(cuisine) IN (").append(marks).append(")) ");
+      for (String c : allowedCuisines) args.add(c.toLowerCase(Locale.ROOT));
+    }
+
+    // meal types (optional allow-list)
+    if (allowedMealTypes != null && !allowedMealTypes.isEmpty()) {
+      String marks = String.join(",", Collections.nCopies(allowedMealTypes.size(), "?"));
+      sql.append(" AND (mealType IS NOT NULL AND LOWER(mealType) IN (").append(marks).append(")) ");
+      for (String t : allowedMealTypes) args.add(t.toLowerCase(Locale.ROOT));
+    }
+
+    sql.append(" ORDER BY RAND() LIMIT ? ");
+    args.add(limit);
+
+    return jdbc.query(sql.toString(), args.toArray(), new RecipeCardRowMapper());
   }
 }
