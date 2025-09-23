@@ -94,6 +94,7 @@ public class MessageJdbcRepository {
         }
     }
 
+    // TODO inconsistent return type
     public int delete(Integer id) {
         return jdbc.update(
                 "DELETE from messages WHERE messageId=?",
@@ -105,11 +106,11 @@ public class MessageJdbcRepository {
         return jdbc.query(sql, new MessageRowMapper(), id).stream().findFirst().orElse(null);
     }
 
+    // TODO inconsistent return type
     public int updateReply(String id, String reply, String status) {
         String sql = "UPDATE messages " +
                 "SET reply = ?, status = ? " + 
                 "WHERE messageId = ?";
         return jdbc.update(sql, reply, status, id);
     }
-
 }
