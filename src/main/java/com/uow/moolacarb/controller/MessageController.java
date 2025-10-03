@@ -68,6 +68,7 @@ public class MessageController {
         return service.getMessages(limit);
     }
 
+    // TODO Better naming of delete to deleteMessage or removeMessage and id should be String
     @DeleteMapping("/delete/{id}")
     public void delete(@PathVariable Integer id) {
         // TODO error handling try except catch exception
