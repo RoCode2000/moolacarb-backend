@@ -110,21 +110,21 @@ public class RecipeJdbcRepository {
     return jdbc.update(sql, recipeId);
   }
 
-  public Recipe findById(String recipeId) {
-        String sql = """
-            SELECT recipeId, title, serving, ingredients, instructions, calories,
-                carbohydrates, protein, fat, saturatedFat, sodium, cholesterol,
-                potassium, status, author, prepTime, cookTime, restingTime,
-                cuisine, description, mealType, overallRating, imageLink, imageBinary
-            FROM recipe
-            WHERE recipeId = ?
-        """;
-        try {
-            return jdbc.queryForObject(sql, new RecipeRowMapper(), recipeId);
-        } catch (EmptyResultDataAccessException e) {
-            return null; 
-        }
-    }
+  // public Recipe findById(String recipeId) {
+  //       String sql = """
+  //           SELECT recipeId, title, serving, ingredients, instructions, calories,
+  //               carbohydrates, protein, fat, saturatedFat, sodium, cholesterol,
+  //               potassium, status, author, prepTime, cookTime, restingTime,
+  //               cuisine, description, mealType, overallRating, imageLink, imageBinary
+  //           FROM recipe
+  //           WHERE recipeId = ?
+  //       """;
+  //       try {
+  //           return jdbc.queryForObject(sql, new RecipeRowMapper(), recipeId);
+  //       } catch (EmptyResultDataAccessException e) {
+  //           return null; 
+  //       }
+  //   }
 
   public List<Recipe> listAllRecipesByUser(String userId) {
     String sql = """
@@ -138,11 +138,6 @@ public class RecipeJdbcRepository {
     return jdbc.query(sql, new BeanPropertyRowMapper<>(Recipe.class), userId);
   }
 
-    public long countAllActive() {
-      String sql = "SELECT COUNT(*) FROM recipe where status='A'";
-      return jdbc.queryForObject(sql, Long.class);
-    }
-
     public List<Recipe> getActiveRecipes(Integer limit) {
         String sql = "SELECT * FROM `recipe` WHERE status = 'A'";
         if (limit != null && limit > 0) {
@@ -151,5 +146,29 @@ public class RecipeJdbcRepository {
         } else {
             return jdbc.query(sql, new RecipeRowMapper());
         }
+    }
+
+    public List<Recipe> getAllRecipes(Integer limit) {
+        String sql = "SELECT * FROM `recipe`";
+        if (limit != null && limit > 0) {
+            sql += " LIMIT ?";
+            return jdbc.query(sql, new RecipeRowMapper(), limit);
+        } else {
+            return jdbc.query(sql, new RecipeRowMapper());
+        }
+    }
+
+    public Recipe findById(String recipeId) {
+        String sql = "SELECT * FROM `recipe` WHERE recipeId = ?";
+        try {
+          return jdbc.query(sql, new RecipeRowMapper(), recipeId).stream().findFirst().orElse(null);
+        } catch (EmptyResultDataAccessException e) {
+          return null; 
+      }
+    }
+
+    public int updateStatus(String recipeId, String status) {
+        String sql = "UPDATE `recipe` SET status = ? WHERE recipeId = ?";
+        return jdbc.update(sql, status, recipeId);
     }
 }
