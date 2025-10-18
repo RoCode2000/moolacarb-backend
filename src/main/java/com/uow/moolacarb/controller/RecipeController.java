@@ -41,7 +41,6 @@ public class RecipeController {
     public Long countAllActive() {
         return this.service.countAllActive();
     }
-
     // TODO Get recipe by ID for display of recipe details
 
     @GetMapping("/getActiveRecipes")
