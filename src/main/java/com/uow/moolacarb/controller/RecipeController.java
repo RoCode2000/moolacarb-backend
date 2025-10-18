@@ -3,9 +3,12 @@ package com.uow.moolacarb.controller;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,8 +16,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.uow.moolacarb.DataTransferObject.RecipeUpdateRequest;
 import com.uow.moolacarb.model.Recipe;
 import com.uow.moolacarb.service.RecipeService;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -84,6 +90,29 @@ public class RecipeController {
     @GetMapping("/{userId}")
     public List<Recipe> getRecipesByUser(@PathVariable String userId) {
         return this.service.getRecipesByUser(userId); 
+    }
+
+    @GetMapping("/getRecipes")
+    public List<Recipe> getAllRecipes(@RequestParam(required = false) Integer limit) {
+        // TODO Error Handling
+        return this.service.getAllRecipes(limit);
+    }
+
+    @PatchMapping("/update/{recipeId}")
+    public ResponseEntity<?> updateRecipe(@PathVariable String recipeId, @RequestBody RecipeUpdateRequest req) {
+        try {
+            Recipe updated = service.updateRecipe(recipeId, req);
+            return ResponseEntity.ok(updated);
+        }
+        catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(404).body("User not found");
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body("Status not available");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Internal error");
+        }
     }
     
 }

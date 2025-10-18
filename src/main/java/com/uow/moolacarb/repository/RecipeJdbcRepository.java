@@ -149,6 +149,39 @@ public class RecipeJdbcRepository {
     return jdbc.query(sql, new BeanPropertyRowMapper<>(Recipe.class), userId);
   }
 
+    public List<Recipe> getActiveRecipes(Integer limit) {
+        String sql = "SELECT * FROM `recipe` WHERE status = 'A'";
+        if (limit != null && limit > 0) {
+            sql += " LIMIT ?";
+            return jdbc.query(sql, new RecipeRowMapper(), limit);
+        } else {
+            return jdbc.query(sql, new RecipeRowMapper());
+        }
+    }
+
+    public List<Recipe> getAllRecipes(Integer limit) {
+        String sql = "SELECT * FROM `recipe`";
+        if (limit != null && limit > 0) {
+            sql += " LIMIT ?";
+            return jdbc.query(sql, new RecipeRowMapper(), limit);
+        } else {
+            return jdbc.query(sql, new RecipeRowMapper());
+        }
+    }
+
+    public Recipe findById(String recipeId) {
+        String sql = "SELECT * FROM `recipe` WHERE recipeId = ?";
+        try {
+          return jdbc.query(sql, new RecipeRowMapper(), recipeId).stream().findFirst().orElse(null);
+        } catch (EmptyResultDataAccessException e) {
+          return null; 
+      }
+    }
+
+    public int updateStatus(String recipeId, String status) {
+        String sql = "UPDATE `recipe` SET status = ? WHERE recipeId = ?";
+        return jdbc.update(sql, status, recipeId);
+    }
   public long countAllActive() {
     String sql = "SELECT COUNT(*) FROM recipe WHERE status='A'";
     return jdbc.queryForObject(sql, Long.class);
