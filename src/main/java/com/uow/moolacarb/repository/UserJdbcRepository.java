@@ -2,6 +2,7 @@ package com.uow.moolacarb.repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -202,4 +203,10 @@ public class UserJdbcRepository {
         String sql = "SELECT * FROM `user` WHERE userId = ?";
         return jdbc.query(sql, new UserRowMapper(), userId).stream().findFirst().orElse(null);
     }
+
+public void updateOnboarding(String firebaseId, String gender, LocalDateTime dob, String exercise, String goals, Integer timeframe) {
+    String sql = "UPDATE user SET gender=?, dob=?, exercise=?, goals=?, timeframe=? WHERE firebaseId=?";
+    jdbc.update(sql, gender, dob, exercise, goals, timeframe, firebaseId);
+}
+
 }
