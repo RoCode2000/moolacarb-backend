@@ -35,8 +35,9 @@ public class MealLogService {
     @Transactional
     public MealLog createByFirebase(String firebaseId, MealLog payload) {
         final String sql = """
-            INSERT INTO meallog (foodsConsumed, timeConsumed, remarks, calories, userId)
-            SELECT ?, ?, ?, ?, u.userId
+            INSERT INTO meallog
+              (foodsConsumed, timeConsumed, remarks, calories, carbs, protein, fat, userId)
+            SELECT ?, ?, ?, ?, ?, ?, ?, u.userId
             FROM `user` u
             WHERE u.firebaseId = ?
         """;
@@ -48,7 +49,11 @@ public class MealLogService {
             ps.setTimestamp(2, Timestamp.valueOf(payload.getTimeConsumed())); // LocalDateTime -> DATETIME
             ps.setString(3, payload.getRemarks());
             if (payload.getCalories() != null) ps.setInt(4, payload.getCalories()); else ps.setObject(4, null);
-            ps.setString(5, firebaseId);
+            if (payload.getCarbs() != null) ps.setFloat(5, payload.getCarbs()); else ps.setObject(5, null);
+            if (payload.getProtein() != null) ps.setFloat(6, payload.getProtein()); else ps.setObject(6, null);
+            if (payload.getFat() != null) ps.setFloat(7, payload.getFat()); else ps.setObject(7, null);
+
+            ps.setString(8, firebaseId);
             return ps;
         }, kh);
 
@@ -63,6 +68,9 @@ public class MealLogService {
         MealLog m = repo.findById(id).orElseThrow();
         m.setFoodsConsumed(payload.getFoodsConsumed());
         m.setCalories(payload.getCalories());
+        m.setCarbs(payload.getCarbs());      
+        m.setProtein(payload.getProtein());   
+        m.setFat(payload.getFat());      
         m.setTimeConsumed(payload.getTimeConsumed());
         m.setRemarks(payload.getRemarks());
         return repo.save(m);

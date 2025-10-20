@@ -60,7 +60,10 @@ public class RecipeJdbcRepository {
       String title = rs.getString("title");
       int kcal = Math.round(rs.getFloat("kcal_per_serving"));
       String imageLink = rs.getString("imageLink");
-      return new RecipeCard(id, title, kcal, imageLink);
+      float carbohydrates = rs.getFloat("carbohydrates");
+      float protein =  rs.getFloat("protein");
+      float fat =  rs.getFloat("fat");
+      return new RecipeCard(id, title, kcal, imageLink, carbohydrates, protein, fat);
     }
   }
 
@@ -193,9 +196,12 @@ public class RecipeJdbcRepository {
             recipeId,
             title,
             imageLink,
-            calories AS kcal_per_serving
+            calories AS kcal_per_serving,
+            carbohydrates,
+            protein,
+            fat
           FROM recipe
-          WHERE status = 'A'
+          WHERE status = 'A' 
             AND calories IS NOT NULL
             AND calories BETWEEN ? AND ?
         """ + excludeTypesSql + """
@@ -234,7 +240,10 @@ public class RecipeJdbcRepository {
             recipeId,
             title,
             imageLink,
-            calories AS kcal_per_serving
+            calories AS kcal_per_serving,
+            carbohydrates,
+            protein,
+            fat
           FROM recipe
           WHERE status = 'A'
             AND calories IS NOT NULL
