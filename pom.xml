@@ -11,7 +11,7 @@
 	<groupId>com.uow</groupId>
 	<artifactId>moolacarb</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
+	<packaging>jar</packaging>
 	<name>moolacarb</name>
 	<description>Backend for MoolaCarb</description>
 	<url/>
