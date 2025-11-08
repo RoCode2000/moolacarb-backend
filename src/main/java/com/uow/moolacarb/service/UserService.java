@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service;
 
 import com.uow.moolacarb.DataTransferObject.UserUpdateRequest;
 import com.uow.moolacarb.model.User;
+import com.uow.moolacarb.repository.HeightHistoryRepository;
 import com.uow.moolacarb.repository.UserJdbcRepository;
 import com.uow.moolacarb.repository.WeightHistoryRepository;
-import com.uow.moolacarb.repository.HeightHistoryRepository;
 
 @Service
 public class UserService {
@@ -28,7 +28,7 @@ public class UserService {
 
     public void create(User u) {
         if (u.getPremium() == null || u.getPremium().isBlank())
-            u.setPremium("F");
+            u.setPremium("P");
         if (u.getUserStatus() == null || u.getUserStatus().isBlank())
             u.setUserStatus("A");
         if (u.getCreatedDate() == null)
